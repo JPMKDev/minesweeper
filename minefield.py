@@ -3,6 +3,7 @@ from time import sleep
 from tkinter import *
 from tkinter import ttk
 from cell import *
+from functools import partial
     
 class Minefield:
     def __init__(
@@ -30,15 +31,18 @@ class Minefield:
             random.seed(seed) 
         self.__create_cells(self.__inc_counter)
 
-    def __inc_counter(self):
-        self.__counter.set(self.__counter.get() + 1)
+    def __inc_counter(self, is_mine):
+        if is_mine:
+            print("boom!")
+        self.__counter.set(-1 if is_mine else self.__counter.get() + 1)
 
     def __create_cells(self, button_func):
         ttk.Label(self.window.get_canvas(), textvariable=self.__counter).grid(column=0, row=0, sticky=(W, E))
         for y in range(self.num_rows):
             row = []
             for x in range(self.num_cols):
-                row.append(Cell(x, y+1, self.window, button_func))
+                is_mine = random.randint(0,9)==0
+                row.append(Cell(x, y+1, is_mine, self.window, partial(button_func, is_mine)))
             self.__cells.append(row)
     
     def __draw_cell(self, x, y):
