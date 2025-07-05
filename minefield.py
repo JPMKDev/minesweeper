@@ -33,6 +33,9 @@ class Minefield:
             random.seed(seed) 
         self.__create_cells(self.__inc_counter)
 
+    def get_cells(self):
+        return self.__cells
+
     def __inc_counter(self, cell):
         cell.reveal()
         if cell.is_mine:
@@ -54,12 +57,12 @@ class Minefield:
                     if is_mine:
                         num_mines -= 1
                 print(f"creating cell @ ({x},{y})")
-                row.append(Cell(x, y, is_mine, self.window, button_func))
+                row.append(Cell(x, y, is_mine, self.window, button_func, self))
             self.__cells.append(row)
         #print(self.__cells)
         for y in range(self.num_rows):
             for x in range(self.num_cols):
-                self.__cells[y][x].get_value(self.__cells)
+                self.__cells[y][x].get_value()
     
     def __draw_cell(self, x, y):
         self.__cells[y][x].draw()
