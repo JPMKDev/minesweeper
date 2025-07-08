@@ -15,7 +15,8 @@ class Cell:
         self.revealed_value = StringVar()
         self.revealed_value.set("?")
         self.__parent = parent
-        self.btn = Button(self.__win.get_canvas(), textvariable=self.revealed_value, command=partial(button_func, self)).grid(column=x, row=y+1, sticky=W)
+        self.btn = Button(self.__win.get_canvas(), height=1, width=1, textvariable=self.revealed_value, command=partial(button_func, self))
+        self.btn.grid(column=x, row=y+1, sticky=W)
 
     def __repr__(self):
         return f"Cell {self.is_mine}(@{self.__x},{self.__y}) sees {self.value}"
@@ -23,61 +24,54 @@ class Cell:
     def reveal(self):
         self.revealed_value.set(f"{self.value}{"*"if self.is_mine else ""}")
         self.is_revealed = True
-        if self.value == 0:
-            cells = self.__parent.get_cells()
-            directions_exist = self.direction_exist_huh()
-            # numpad notation
-            if(directions_exist[3] and directions_exist[0]): #1
-                if not cells[self.__y+1][self.__x-1].is_revealed:
-                    cells[self.__y+1][self.__x-1].reveal()
-            if(directions_exist[3]): #2
-                if not cells[self.__y+1][self.__x].is_revealed:
-                    cells[self.__y+1][self.__x].reveal()
-            if(directions_exist[3] and directions_exist[1]): #3
-                if not cells[self.__y+1][self.__x+1].is_revealed:
-                    cells[self.__y+1][self.__x+1].reveal()
-            if(directions_exist[0]): #4
-                if not cells[self.__y][self.__x-1].is_revealed:
-                    cells[self.__y][self.__x-1].reveal()
-            if(directions_exist[1]): #6
-                if not cells[self.__y][self.__x+1].is_revealed:
-                    cells[self.__y][self.__x+1].reveal()
-            if(directions_exist[2] and directions_exist[0]): #7
-                if not cells[self.__y-1][self.__x-1].is_revealed:
-                    cells[self.__y-1][self.__x-1].reveal()
-            if(directions_exist[2]): #8
-                if not cells[self.__y-1][self.__x].is_revealed:
-                    cells[self.__y-1][self.__x].reveal()
-            if(directions_exist[2] and directions_exist[1]): #9
-                if not cells[self.__y-1][self.__x+1].is_revealed:
-                    cells[self.__y-1][self.__x+1].reveal()
+        match(self.value):
+            case 0:
+                self.btn.config(bg="LightCyan3", activebackground="LightCyan2")
+                adj_cells = self.get_adjacent_cells()
+                for cell in adj_cells:
+                    if cell is not None and not cell.is_revealed:
+                        cell.reveal()
+            case 1:
+                self.btn.config(bg="PaleTurquoise3", activebackground="PaleTurquoise2")
+            case 2:
+                self.btn.config(bg="PaleGreen3", activebackground="PaleGreen1")
+            case 3:
+                self.btn.config(bg="SpringGreen3", activebackground="SpringGreen2")
+            case 4:
+                self.btn.config(bg="Yellow3", activebackground="Yellow2")
+            case 5:
+                self.btn.config(bg="Firebrick2", activebackground="Firebrick1")
+            case 6:
+                self.btn.config(bg="OrangeRed3", activebackground="OrangeRed2")
+            case 7:
+                self.btn.config(bg="Red3", activebackground="Red2")
+            case _: #8
+                self.btn.config(bg="Purple3", activebackground="Purple2")
 
-    def direction_exist_huh(self):
+            
+
+    def get_adjacent_cells(self):
         l_exist = self.__x != 0 #check left
         r_exist = self.__x < len(self.__parent.get_cells()[self.__y])-1 #check right
         u_exist = self.__y != 0 #check up
         d_exist = self.__y < len(self.__parent.get_cells())-1 #check down
-        return (l_exist, r_exist, u_exist, d_exist)
+        cells = self.__parent.get_cells()
+        adjacent = []
+        # numpad notation
+        adjacent.append(cells[self.__y+1][self.__x-1] if d_exist and l_exist else None) #1
+        adjacent.append(cells[self.__y+1][self.__x] if d_exist else None) #2
+        adjacent.append(cells[self.__y+1][self.__x+1] if d_exist and r_exist else None) #3
+        adjacent.append(cells[self.__y][self.__x-1] if l_exist else None) #4
+        adjacent.append(cells[self.__y][self.__x+1] if r_exist else None) #6
+        adjacent.append(cells[self.__y-1][self.__x-1] if u_exist and l_exist else None) #7
+        adjacent.append(cells[self.__y-1][self.__x] if u_exist else None) #8
+        adjacent.append(cells[self.__y-1][self.__x+1] if u_exist and r_exist else None) #9
+
+        return adjacent
     
     def get_value(self):
         value = 0
-        directions_exist = self.direction_exist_huh()
-        cells = self.__parent.get_cells()
-        # numpad notation
-        if(directions_exist[3] and directions_exist[0]): #1
-            value += 1 if cells[self.__y+1][self.__x-1].is_mine else 0
-        if(directions_exist[3]): #2
-            value += 1 if cells[self.__y+1][self.__x].is_mine else 0
-        if(directions_exist[3] and directions_exist[1]): #3
-            value += 1 if cells[self.__y+1][self.__x+1].is_mine else 0
-        if(directions_exist[0]): #4
-            value += 1 if cells[self.__y][self.__x-1].is_mine else 0
-        if(directions_exist[1]): #6
-            value += 1 if cells[self.__y][self.__x+1].is_mine else 0
-        if(directions_exist[2] and directions_exist[0]): #7
-            value += 1 if cells[self.__y-1][self.__x-1].is_mine else 0
-        if(directions_exist[2]): #8
-            value += 1 if cells[self.__y-1][self.__x].is_mine else 0
-        if(directions_exist[2] and directions_exist[1]): #9
-            value += 1 if cells[self.__y-1][self.__x+1].is_mine else 0
+        adj_cells = self.get_adjacent_cells()
+        for cell in adj_cells:
+            value += 1 if cell is not None and cell.is_mine else 0
         self.value = value

@@ -46,14 +46,14 @@ class Minefield:
     def __create_cells(self, button_func):
         ttk.Label(self.window.get_canvas(), textvariable=self.__counter).grid(column=0, row=0, sticky=(W, E))
         ttk.Label(self.window.get_canvas(), textvariable=self.__boom_counter).grid(column=1, row=0, sticky=(W, E))
-        num_mines = (self.num_cols * self.num_rows)//10
+        num_mines = (self.num_cols * self.num_rows)//6
         #print(num_mines)
         for y in range(self.num_rows):
             row = []
             for x in range(self.num_cols):
                 is_mine = False
                 if num_mines > 0:
-                    is_mine = random.randint(0,9)==0
+                    is_mine = random.randint(0,6)==0
                     if is_mine:
                         num_mines -= 1
                 print(f"creating cell @ ({x},{y})")
@@ -63,6 +63,17 @@ class Minefield:
         for y in range(self.num_rows):
             for x in range(self.num_cols):
                 self.__cells[y][x].get_value()
+
+    def expand(self, direction):
+        match direction:
+            case 4: #Left
+                return None
+            case 2: #Down
+                return None
+            case 6: #Right
+                return None
+            case 8: #Up
+                return None
     
     def __draw_cell(self, x, y):
         self.__cells[y][x].draw()
