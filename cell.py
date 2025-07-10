@@ -22,7 +22,10 @@ class Cell:
         return f"Cell {self.is_mine}(@{self.__x},{self.__y}) sees {self.value}"
     
     def reveal(self):
+        if self.__y == self.__parent.num_rows - 1:
+            self.__parent.expand(2)#down
         self.revealed_value.set(f"{self.value}{"*"if self.is_mine else ""}")
+        #self.btn.grid(column=self.__x + 20, row=self.__y+1)
         self.is_revealed = True
         match(self.value):
             case 0:
@@ -47,6 +50,7 @@ class Cell:
                 self.btn.config(bg="Red3", activebackground="Red2")
             case _: #8
                 self.btn.config(bg="Purple3", activebackground="Purple2")
+
 
             
 

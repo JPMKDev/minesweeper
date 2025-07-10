@@ -24,6 +24,7 @@ class Minefield:
         self.cell_size_x = cell_size_x
         self.cell_size_y = cell_size_y
         self.window = window
+        self.__available_mines = (self.num_cols * self.num_rows)//6
         self.__cells = []
         self.__counter = IntVar()
         self.__counter.initialize(0)
@@ -31,7 +32,7 @@ class Minefield:
         self.__boom_counter.initialize(0)
         if seed is not None:
             random.seed(seed) 
-        self.__create_cells(self.__inc_counter)
+        self.__create_cells()
 
     def get_cells(self):
         return self.__cells
@@ -43,33 +44,46 @@ class Minefield:
         else:
             self.__counter.set(self.__counter.get() + 1)
 
-    def __create_cells(self, button_func):
+    def __create_cells(self):
         ttk.Label(self.window.get_canvas(), textvariable=self.__counter).grid(column=0, row=0, sticky=(W, E))
         ttk.Label(self.window.get_canvas(), textvariable=self.__boom_counter).grid(column=1, row=0, sticky=(W, E))
-        num_mines = (self.num_cols * self.num_rows)//6
         #print(num_mines)
         for y in range(self.num_rows):
             row = []
             for x in range(self.num_cols):
                 is_mine = False
-                if num_mines > 0:
+                if self.__available_mines > 0:
                     is_mine = random.randint(0,6)==0
                     if is_mine:
-                        num_mines -= 1
+                        self.__available_mines -= 1
                 print(f"creating cell @ ({x},{y})")
-                row.append(Cell(x, y, is_mine, self.window, button_func, self))
+                row.append(Cell(x, y, is_mine, self.window, self.__inc_counter, self))
             self.__cells.append(row)
         #print(self.__cells)
         for y in range(self.num_rows):
             for x in range(self.num_cols):
                 self.__cells[y][x].get_value()
 
-    def expand(self, direction):
+    def expand(self, direction): #direction should be in numpad notation
         match direction:
             case 4: #Left
                 return None
             case 2: #Down
-                return None
+                self.__available_mines += self.num_cols
+                row = []
+                for x in range(self.num_cols):
+                    is_mine = False
+                    if self.__available_mines > 0:
+                        is_mine = random.randint(0,3)==0
+                        if is_mine:
+                            self.__available_mines -= 1
+                    print(f"creating cell @ ({x},{self.num_rows})")
+                    row.append(Cell(x, self.num_rows, is_mine, self.window, self.__inc_counter, self))
+                self.__cells.append(row)
+                self.num_rows += 1
+                for y in range(self.num_rows-2, self.num_rows):
+                    for x in range(self.num_cols):
+                        self.__cells[y][x].get_value()
             case 6: #Right
                 return None
             case 8: #Up
