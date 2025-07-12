@@ -3,27 +3,20 @@ from time import sleep
 from tkinter import *
 from tkinter import ttk
 from cell import *
-from functools import partial
     
 class Minefield:
     def __init__(
         self,
-        x1,
-        y1,
         num_rows,
         num_cols,
-        cell_size_x,
-        cell_size_y,
-        window=None,
-        seed=None
+        parent=None, #parent should be the innermost frame
+        canvas=None, #canvas should be the canvas which holds the parent and the scrollbar
+        seed=None #seed is used to generate the minefield randomly
     ):
-        self.x1 = x1
-        self.y1 = y1
         self.num_rows = 2 if num_rows<2 else num_rows
         self.num_cols = 2 if num_cols<2 else num_cols
-        self.cell_size_x = cell_size_x
-        self.cell_size_y = cell_size_y
-        self.window = window
+        self.__parent = parent
+        self.__canvas = canvas
         self.__available_mines = (self.num_cols * self.num_rows)//6
         self.__cells = []
         self.__counter = IntVar()
@@ -45,8 +38,8 @@ class Minefield:
             self.__counter.set(self.__counter.get() + 1)
 
     def __create_cells(self):
-        ttk.Label(self.window.get_canvas(), textvariable=self.__counter).grid(column=0, row=0, sticky=(W, E))
-        ttk.Label(self.window.get_canvas(), textvariable=self.__boom_counter).grid(column=1, row=0, sticky=(W, E))
+        #ttk.Label(self.master.get_canvas(), textvariable=self.__counter).grid(column=0, row=0, sticky=(W, E)) #replace get_canvas with root.mainframe
+        #ttk.Label(self.master.get_canvas(), textvariable=self.__boom_counter).grid(column=1, row=0, sticky=(W, E))
         #print(num_mines)
         for y in range(self.num_rows):
             row = []
@@ -57,7 +50,7 @@ class Minefield:
                     if is_mine:
                         self.__available_mines -= 1
                 print(f"creating cell @ ({x},{y})")
-                row.append(Cell(x, y, is_mine, self.window, self.__inc_counter, self))
+                row.append(Cell(x, y, is_mine, self.__parent, self.__inc_counter, self))
             self.__cells.append(row)
         #print(self.__cells)
         for y in range(self.num_rows):
@@ -67,7 +60,7 @@ class Minefield:
     def expand(self, direction): #direction should be in numpad notation
         match direction:
             case 4: #Left
-                return None
+                pass #left expansion is not implemented
             case 2: #Down
                 self.__available_mines += self.num_cols
                 row = []
@@ -78,22 +71,36 @@ class Minefield:
                         if is_mine:
                             self.__available_mines -= 1
                     print(f"creating cell @ ({x},{self.num_rows})")
-                    row.append(Cell(x, self.num_rows, is_mine, self.window, self.__inc_counter, self))
+                    row.append(Cell(x, self.num_rows, is_mine, self.__parent, self.__inc_counter, self))
                 self.__cells.append(row)
                 self.num_rows += 1
                 for y in range(self.num_rows-2, self.num_rows):
                     for x in range(self.num_cols):
                         self.__cells[y][x].get_value()
             case 6: #Right
-                return None
+                self.__available_mines+=self.num_rows
+                for y in range(len(self.__cells)):
+                    row = self.__cells[y]
+                    is_mine = False
+                    if self.__available_mines > 0:
+                        is_mine = random.randint(0,3)==0
+                        if is_mine:
+                            self.__available_mines -= 1
+                    print(f"creating cell @ ({self.num_cols},{y})")
+                    row.append(Cell(self.num_cols, y, is_mine, self.__parent, self.__inc_counter, self))
+                self.num_cols += 1
+                for y in range(self.num_rows):
+                    for x in range(self.num_cols-2, self.num_cols):
+                        self.__cells[y][x].get_value()
             case 8: #Up
-                return None
+                pass #up expansion is not implemented
+        self.__canvas.config(scrollregion=self.__canvas.bbox("all"))
     
     def __draw_cell(self, x, y):
         self.__cells[y][x].draw()
         self.__animate()
     
     def __animate(self, multiplier=1):
-        if self.window is not None:
-            self.window.redraw()
+        if self.master is not None:
+            self.master.redraw()
             sleep(.01*multiplier)

@@ -1,29 +1,28 @@
 from functools import partial
-from window import Window
-from point import *
 from tkinter import *
-from tkinter import ttk
 
 class Cell:
-    def __init__(self,x, y, is_mine, window=None, button_func=None, parent=None):
+    def __init__(self,x, y, is_mine, parent_frame, button_func=None, minefield=None):
         self.__x = x
         self.__y = y
-        self.__win = window
+        self.__parent_frame = parent_frame
         self.is_mine = is_mine
         self.is_revealed = False
         self.value = 0
         self.revealed_value = StringVar()
         self.revealed_value.set("?")
-        self.__parent = parent
-        self.btn = Button(self.__win.get_canvas(), height=1, width=1, textvariable=self.revealed_value, command=partial(button_func, self))
-        self.btn.grid(column=x, row=y+1, sticky=W)
+        self.__minefield = minefield
+        self.btn = Button(self.__parent_frame, height=1, width=1, textvariable=self.revealed_value, command=partial(button_func, self))
+        self.btn.grid(column=x, row=y, sticky='news')
 
     def __repr__(self):
         return f"Cell {self.is_mine}(@{self.__x},{self.__y}) sees {self.value}"
     
     def reveal(self):
-        if self.__y == self.__parent.num_rows - 1:
-            self.__parent.expand(2)#down
+        if self.__y == self.__minefield.num_rows - 1:
+            self.__minefield.expand(2)#down
+        if self.__x == self.__minefield.num_cols - 1:
+            self.__minefield.expand(6)#right
         self.revealed_value.set(f"{self.value}{"*"if self.is_mine else ""}")
         #self.btn.grid(column=self.__x + 20, row=self.__y+1)
         self.is_revealed = True
@@ -56,10 +55,10 @@ class Cell:
 
     def get_adjacent_cells(self):
         l_exist = self.__x != 0 #check left
-        r_exist = self.__x < len(self.__parent.get_cells()[self.__y])-1 #check right
+        r_exist = self.__x < len(self.__minefield.get_cells()[self.__y])-1 #check right
         u_exist = self.__y != 0 #check up
-        d_exist = self.__y < len(self.__parent.get_cells())-1 #check down
-        cells = self.__parent.get_cells()
+        d_exist = self.__y < len(self.__minefield.get_cells())-1 #check down
+        cells = self.__minefield.get_cells()
         adjacent = []
         # numpad notation
         adjacent.append(cells[self.__y+1][self.__x-1] if d_exist and l_exist else None) #1

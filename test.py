@@ -1,5 +1,30 @@
 import tkinter as tk
 
+class Container:
+    def __init__(self, rows, columns, parent, canvas):
+        self.rows = rows
+        self.columns = columns
+        self.parent = parent
+        self.canvas = canvas
+        self.buttons = [[tk.Button() for j in range(columns)] for i in range(rows)]
+
+    def generate_buttons(self):
+        for i in range(0, self.rows):
+            for j in range(0, self.columns):
+                self.buttons[i][j] = tk.Button(self.parent, text=("%d,%d" % (i+1, j+1)), command=self.add_row, width=8, height=2)
+                self.buttons[i][j].grid(row=i, column=j, sticky='news')
+
+    def add_row(self):
+        new_row = []
+        for j in range(0, self.columns):
+            btn = tk.Button(self.parent, text=("%d,%d" % (self.rows+1, j+1)), command=self.add_row, width=8, height=2)
+            btn.grid(row=self.rows, column=j, sticky="news")
+            new_row.append(btn)
+        self.buttons.append(new_row)
+        self.rows += 1
+        self.parent.update_idletasks()
+        self.canvas.config(scrollregion=self.canvas.bbox("all"))
+
 root = tk.Tk()
 root.grid_rowconfigure(0, weight=1)
 root.columnconfigure(0, weight=1)
@@ -34,26 +59,32 @@ vsb.grid(row=0, column=1, sticky='ns')
 canvas.configure(yscrollcommand=vsb.set)
 
 # Create a frame to contain the buttons
+
+# Create a frame to contain the buttons, and make it scrollable
 frame_buttons = tk.Frame(canvas, bg="blue")
-canvas.create_window((0, 0), window=frame_buttons, anchor='nw')
+window_id = canvas.create_window((0, 0), window=frame_buttons, anchor='nw')
+
+# Make frame_buttons width track the canvas width
+def on_canvas_configure(event):
+    canvas.itemconfig(window_id, width=event.width)
+canvas.bind('<Configure>', on_canvas_configure)
+
 
 # Add 9-by-5 buttons to the frame
+
 rows = 9
 columns = 5
-buttons = [[tk.Button() for j in range(columns)] for i in range(rows)]
-for i in range(0, rows):
-    for j in range(0, columns):
-        buttons[i][j] = tk.Button(frame_buttons, text=("%d,%d" % (i+1, j+1)))
-        buttons[i][j].grid(row=i, column=j, sticky='news')
+c1 = Container(rows, columns, frame_buttons, canvas)
+c1.generate_buttons()
 
 # Update buttons frames idle tasks to let tkinter calculate buttons sizes
 frame_buttons.update_idletasks()
 
 # Resize the canvas frame to show exactly 5-by-5 buttons and the scrollbar
-first5columns_width = sum([buttons[0][j].winfo_width() for j in range(0, 5)])
-first5rows_height = sum([buttons[i][0].winfo_height() for i in range(0, 5)])
-frame_canvas.config(width=first5columns_width + vsb.winfo_width(),
-                    height=first5rows_height)
+first5columns_width = sum([c1.buttons[0][j].winfo_width() for j in range(0, 5)])
+first5rows_height = sum([c1.buttons[i][0].winfo_height() for i in range(0, 5)])
+frame_canvas.config(width=first5columns_width + vsb.winfo_width(), height=first5rows_height)
+
 
 # Set the canvas scrolling region
 canvas.config(scrollregion=canvas.bbox("all"))

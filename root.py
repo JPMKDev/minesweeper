@@ -1,0 +1,65 @@
+from tkinter import *
+from tkinter import ttk
+from minefield import Minefield
+
+class Root:
+    def __init__(self):
+        self.__root = Tk()
+        self.__root.grid_rowconfigure(0, weight=1)
+        self.__root.columnconfigure(0, weight=1)
+        self.__root.title("Minesweeper")
+        self.__root.protocol("WM_DELETE_WINDOW", self.close)
+
+        self.__main_frame = ttk.Frame(self.__root, padding="3 3 12 12")
+        self.__main_frame.grid(sticky="news")
+
+        self.__canvas_frame = Frame(self.__main_frame)
+        self.__canvas_frame.grid(row=1, column=0, pady=(5,0), sticky='nw')
+        self.__canvas_frame.grid_rowconfigure(0, weight=1)
+        self.__canvas_frame.grid_columnconfigure(0, weight=1)
+        self.__canvas_frame.grid_propagate(False)
+
+        self.__canvas = Canvas(self.__canvas_frame)
+        self.__canvas.grid(row=0, column=0, sticky="news")
+
+        self.__vsb = Scrollbar(self.__canvas_frame, orient="vertical", command=self.__canvas.yview)
+        self.__vsb.grid(row=0, column=1, sticky='ns')
+        self.__canvas.configure(yscrollcommand=self.__vsb.set)
+
+        self.__board_frame = Frame(self.__canvas)
+        self.__canvas.create_window((0, 0), window=self.__board_frame, anchor='nw')
+
+        def on_canvas_configure(event):
+            self.__canvas.itemconfig(self.__board_frame, width=event.width)
+        self.__canvas.bind('<Configure>', on_canvas_configure)
+
+        self.minefield = None
+
+    def geometry(self, geometry):
+        self.__root.geometry(geometry)
+
+    def create_minefield(self, num_rows, num_cols, seed=None):
+        self.minefield = Minefield(num_rows, num_cols, self.__board_frame, self.__canvas, seed)
+        self.__board_frame.update_idletasks()
+        self.resize_canvas_frame()
+
+    def resize_canvas_frame(self):
+        cells = self.minefield.get_cells()
+        first5columns_width = sum([cells[0][j].btn.winfo_width() for j in range(0, 15)])
+        first5rows_height = sum([cells[i][0].btn.winfo_height() for i in range(0, 15)])
+        self.__canvas_frame.config(width=first5columns_width + self.__vsb.winfo_width(), height=first5rows_height)
+        self.__canvas.config(scrollregion=self.__canvas.bbox("all"))
+
+
+    def redraw(self):
+        self.__root.update_idletasks()
+        self.__root.update()
+        self.__canvas.config(scrollregion=self.__canvas.bbox("all"))
+
+    def wait_for_close(self):
+        self.running = True
+        while(self.running):
+            self.redraw()
+    
+    def close(self):
+        self.running = False
