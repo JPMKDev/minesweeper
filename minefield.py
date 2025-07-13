@@ -41,21 +41,35 @@ class Minefield:
         #ttk.Label(self.master.get_canvas(), textvariable=self.__counter).grid(column=0, row=0, sticky=(W, E)) #replace get_canvas with root.mainframe
         #ttk.Label(self.master.get_canvas(), textvariable=self.__boom_counter).grid(column=1, row=0, sticky=(W, E))
         #print(num_mines)
-        for y in range(self.num_rows):
-            row = []
-            for x in range(self.num_cols):
-                is_mine = False
-                if self.__available_mines > 0:
-                    is_mine = random.randint(0,6)==0
-                    if is_mine:
-                        self.__available_mines -= 1
-                print(f"creating cell @ ({x},{y})")
-                row.append(Cell(x, y, is_mine, self.__parent, self.__inc_counter, self))
-            self.__cells.append(row)
-        #print(self.__cells)
-        for y in range(self.num_rows):
-            for x in range(self.num_cols):
+        self.__place_cells(6, self.num_rows, row_end=True)
+        self.__get_values()
+
+    def __place_cells(self, density, rows=0, row_end=True, cols=0, col_end=True):
+        init_huh = self.__cells == []
+        if rows > 0 and row_end:
+            for y in range(rows):
+                y_pos = y + (0 if init_huh else self.num_rows)
+                row = []
+                for x in range(self.num_cols):
+                    is_mine = False
+                    if self.__available_mines > 0:
+                        is_mine = random.randint(0,density)==0
+                        if is_mine:
+                            self.__available_mines -= 1
+                    print(f"creating cell @ ({x},{y_pos})")
+                    row.append(Cell(x, y_pos, is_mine, self.__parent, self.__inc_counter, self))
+                self.__cells.append(row)
+            
+    
+    def __get_values(self, x1=0, x2=None, y1=0, y2=None):
+        if x2 is None:
+            x2 = self.num_cols
+        if y2 is None:
+            y2 = self.num_rows
+        for y in range(y1, y2):
+            for x in range(x1, x2):
                 self.__cells[y][x].get_value()
+
 
     def expand(self, direction): #direction should be in numpad notation
         match direction:
@@ -63,20 +77,9 @@ class Minefield:
                 pass #left expansion is not implemented
             case 2: #Down
                 self.__available_mines += self.num_cols
-                row = []
-                for x in range(self.num_cols):
-                    is_mine = False
-                    if self.__available_mines > 0:
-                        is_mine = random.randint(0,3)==0
-                        if is_mine:
-                            self.__available_mines -= 1
-                    print(f"creating cell @ ({x},{self.num_rows})")
-                    row.append(Cell(x, self.num_rows, is_mine, self.__parent, self.__inc_counter, self))
-                self.__cells.append(row)
+                self.__place_cells(3, rows=1, row_end=True)
                 self.num_rows += 1
-                for y in range(self.num_rows-2, self.num_rows):
-                    for x in range(self.num_cols):
-                        self.__cells[y][x].get_value()
+                self.__get_values(y1=self.num_rows-2, y2=self.num_rows)
             case 6: #Right
                 self.__available_mines+=self.num_rows
                 for y in range(len(self.__cells)):
@@ -89,12 +92,10 @@ class Minefield:
                     print(f"creating cell @ ({self.num_cols},{y})")
                     row.append(Cell(self.num_cols, y, is_mine, self.__parent, self.__inc_counter, self))
                 self.num_cols += 1
-                for y in range(self.num_rows):
-                    for x in range(self.num_cols-2, self.num_cols):
-                        self.__cells[y][x].get_value()
+                self.__get_values(x1=self.num_cols-2, x2=self.num_cols)
             case 8: #Up
                 pass #up expansion is not implemented
-        self.__canvas.config(scrollregion=self.__canvas.bbox("all"))
+        #self.__canvas.config(scrollregion=self.__canvas.bbox("all"))
     
     def __draw_cell(self, x, y):
         self.__cells[y][x].draw()

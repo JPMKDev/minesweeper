@@ -29,10 +29,6 @@ class Root:
         self.__board_frame = Frame(self.__canvas)
         self.__canvas.create_window((0, 0), window=self.__board_frame, anchor='nw')
 
-        def on_canvas_configure(event):
-            self.__canvas.itemconfig(self.__board_frame, width=event.width)
-        self.__canvas.bind('<Configure>', on_canvas_configure)
-
         self.minefield = None
 
     def geometry(self, geometry):
