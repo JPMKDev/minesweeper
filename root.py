@@ -26,6 +26,10 @@ class Root:
         self.__vsb.grid(row=0, column=1, sticky='ns')
         self.__canvas.configure(yscrollcommand=self.__vsb.set)
 
+        self.__hsb = Scrollbar(self.__canvas_frame, orient="horizontal", command=self.__canvas.xview)
+        self.__hsb.grid(row=1, column=0, sticky='ew')
+        self.__canvas.configure(xscrollcommand=self.__hsb.set)
+
         self.__board_frame = Frame(self.__canvas)
         self.__canvas.create_window((0, 0), window=self.__board_frame, anchor='nw')
 
@@ -41,9 +45,9 @@ class Root:
 
     def resize_canvas_frame(self):
         cells = self.minefield.get_cells()
-        first5columns_width = sum([cells[0][j].btn.winfo_width() for j in range(0, 15)])
-        first5rows_height = sum([cells[i][0].btn.winfo_height() for i in range(0, 15)])
-        self.__canvas_frame.config(width=first5columns_width + self.__vsb.winfo_width(), height=first5rows_height)
+        first5columns_width = cells[0][0].btn.winfo_width() * 25
+        first5rows_height = cells[0][0].btn.winfo_height() * 25
+        self.__canvas_frame.config(width=first5columns_width + self.__vsb.winfo_width(), height=first5rows_height + self.__hsb.winfo_height())
         self.__canvas.config(scrollregion=self.__canvas.bbox("all"))
 
 
