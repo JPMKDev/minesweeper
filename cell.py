@@ -18,7 +18,20 @@ class Cell:
     def __repr__(self):
         return f"Cell {self.is_mine}(@{self.__x},{self.__y}) sees {self.value}"
     
+    def shift_right(self):
+        self.__x += 1
+        self.btn.grid(column=self.__x, row=self.__y, sticky='news')
+    
+    def shift_down(self):
+        self.__y += 1
+        self.btn.grid(column=self.__x, row=self.__y, sticky='news')
+        
+    
     def reveal(self):
+        if self.__x == 0:
+            self.__minefield.expand(4)
+        if self.__y == 0:
+            self.__minefield.expand(8) #up
         if self.__y == self.__minefield.num_rows - 1:
             self.__minefield.expand(2)#down
         if self.__x == self.__minefield.num_cols - 1:

@@ -46,9 +46,9 @@ class Minefield:
 
     def __place_cells(self, density, rows=0, row_end=True, cols=0, col_end=True):
         init_huh = self.__cells == []
-        if rows > 0 and row_end:
+        if rows > 0:
             for y in range(rows):
-                y_pos = y + (0 if init_huh else self.num_rows)
+                y_pos = y + (0 if init_huh or not row_end else self.num_rows)
                 row = []
                 for x in range(self.num_cols):
                     is_mine = False
@@ -58,8 +58,25 @@ class Minefield:
                             self.__available_mines -= 1
                     print(f"creating cell @ ({x},{y_pos})")
                     row.append(Cell(x, y_pos, is_mine, self.__parent, self.__inc_counter, self))
-                self.__cells.append(row)
-            
+                if row_end:
+                    self.__cells.append(row)
+                else:
+                    self.__cells.insert(0, row)
+        if cols > 0:
+            for y in range(self.num_rows):
+                    row = self.__cells[y]
+                    is_mine = False
+                    if self.__available_mines > 0:
+                        is_mine = random.randint(0,3)==0
+                        if is_mine:
+                            self.__available_mines -= 1
+                    x = self.num_cols if col_end else 0
+                    print(f"creating cell @ ({x},{y})")
+                    cell = Cell(x, y, is_mine, self.__parent, self.__inc_counter, self)
+                    if col_end:
+                        row.append(cell)
+                    else:
+                        row.insert(0, cell)
     
     def __get_values(self, x1=0, x2=None, y1=0, y2=None):
         if x2 is None:
@@ -74,7 +91,13 @@ class Minefield:
     def expand(self, direction): #direction should be in numpad notation
         match direction:
             case 4: #Left
-                pass #left expansion is not implemented
+                self.__available_mines += self.num_rows
+                for y in range(self.num_rows):
+                    for x in range(self.num_cols):
+                        self.__cells[y][x].shift_right()
+                self.__place_cells(3, cols=1, col_end=False)
+                self.num_cols += 1
+                self.__get_values(x1=0, x2=2)
             case 2: #Down
                 self.__available_mines += self.num_cols
                 self.__place_cells(3, rows=1, row_end=True)
@@ -82,19 +105,17 @@ class Minefield:
                 self.__get_values(y1=self.num_rows-2, y2=self.num_rows)
             case 6: #Right
                 self.__available_mines+=self.num_rows
-                for y in range(len(self.__cells)):
-                    row = self.__cells[y]
-                    is_mine = False
-                    if self.__available_mines > 0:
-                        is_mine = random.randint(0,3)==0
-                        if is_mine:
-                            self.__available_mines -= 1
-                    print(f"creating cell @ ({self.num_cols},{y})")
-                    row.append(Cell(self.num_cols, y, is_mine, self.__parent, self.__inc_counter, self))
+                self.__place_cells(3, cols=1, col_end=True)
                 self.num_cols += 1
                 self.__get_values(x1=self.num_cols-2, x2=self.num_cols)
             case 8: #Up
-                pass #up expansion is not implemented
+                self.__available_mines += self.num_cols
+                for y in range(self.num_rows):
+                    for x in range(self.num_cols):
+                        self.__cells[y][x].shift_down()
+                self.__place_cells(3, rows=1, row_end=False)
+                self.num_rows += 1
+                self.__get_values(y1=0, y2=2)
         #self.__canvas.config(scrollregion=self.__canvas.bbox("all"))
     
     def __draw_cell(self, x, y):
