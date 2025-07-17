@@ -10,19 +10,21 @@ class Minefield:
         num_rows,
         num_cols,
         parent=None, #parent should be the innermost frame
-        canvas=None, #canvas should be the canvas which holds the parent and the scrollbar
+        main_frame=None, #main_frame of the window
         seed=None #seed is used to generate the minefield randomly
     ):
         self.num_rows = 2 if num_rows<2 else num_rows
         self.num_cols = 2 if num_cols<2 else num_cols
         self.__parent = parent
-        self.__canvas = canvas
+        self.__main_frame = main_frame
         self.__available_mines = (self.num_cols * self.num_rows)//6
         self.__cells = []
         self.__counter = IntVar()
         self.__counter.initialize(0)
         self.__boom_counter = IntVar()
         self.__boom_counter.initialize(0)
+        self.flagged = IntVar()
+        self.flagged.initialize(0)
         if seed is not None:
             random.seed(seed) 
         self.__create_cells()
@@ -38,8 +40,9 @@ class Minefield:
             self.__counter.set(self.__counter.get() + 1)
 
     def __create_cells(self):
-        #ttk.Label(self.master.get_canvas(), textvariable=self.__counter).grid(column=0, row=0, sticky=(W, E)) #replace get_canvas with root.mainframe
-        #ttk.Label(self.master.get_canvas(), textvariable=self.__boom_counter).grid(column=1, row=0, sticky=(W, E))
+        ttk.Label(self.__main_frame, textvariable=self.__counter).grid(column=0, row=0, sticky=(W, E))
+        ttk.Label(self.__main_frame, textvariable=self.__boom_counter).grid(column=1, row=0, sticky=(W, E))
+        ttk.Label(self.__main_frame, textvariable=self.flagged).grid(column=2, row=0, sticky=(W, E))
         #print(num_mines)
         self.__place_cells(6, self.num_rows, row_end=True)
         self.__get_values()

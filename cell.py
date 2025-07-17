@@ -8,11 +8,15 @@ class Cell:
         self.__parent_frame = parent_frame
         self.is_mine = is_mine
         self.is_revealed = False
+        self.locked = False
         self.value = 0
         self.revealed_value = StringVar()
         self.revealed_value.set("?")
         self.__minefield = minefield
         self.btn = Button(self.__parent_frame, height=1, width=1, textvariable=self.revealed_value, command=partial(button_func, self))
+        self.__btn_color = self.btn.cget("bg")
+        self.__btn_active_color = self.btn.cget("activebackground")
+        self.btn.bind("<Button-3>", lambda event: self.mark())  # Right-click to mark
         self.btn.grid(column=x, row=y, sticky='news')
 
     def __repr__(self):
@@ -26,10 +30,22 @@ class Cell:
         self.__y += 1
         self.btn.grid(column=self.__x, row=self.__y, sticky='news')
         
+    def mark(self):
+        if not self.is_revealed:
+            self.is_revealed = True
+            self.btn.config(relief=SUNKEN, state=DISABLED, bg="darkgray", activebackground="darkgray")
+            if self.is_mine:
+                self.locked = True
+                self.__minefield.flagged.set(self.__minefield.flagged.get() + 1)
+        elif not self.locked:
+            self.is_revealed = False
+            self.btn.config(relief=RAISED, state=NORMAL, bg=self.__btn_color, activebackground=self.__btn_active_color)
+            
+
     
     def reveal(self):
         if self.__x == 0:
-            self.__minefield.expand(4)
+            self.__minefield.expand(4)#left
         if self.__y == 0:
             self.__minefield.expand(8) #up
         if self.__y == self.__minefield.num_rows - 1:
@@ -45,7 +61,7 @@ class Cell:
                 adj_cells = self.get_adjacent_cells()
                 for cell in adj_cells:
                     if cell is not None and not cell.is_revealed:
-                        cell.reveal()
+                        cell.btn.invoke()
             case 1:
                 self.btn.config(bg="PaleTurquoise3", activebackground="PaleTurquoise2")
             case 2:

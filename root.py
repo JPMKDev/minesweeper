@@ -14,7 +14,7 @@ class Root:
         self.__main_frame.grid(sticky="news")
 
         self.__canvas_frame = Frame(self.__main_frame)
-        self.__canvas_frame.grid(row=1, column=0, pady=(5,0), sticky='nw')
+        self.__canvas_frame.grid(row=2, column=0, columnspan=2, pady=(5,0), sticky='nw')
         self.__canvas_frame.grid_rowconfigure(0, weight=1)
         self.__canvas_frame.grid_columnconfigure(0, weight=1)
         self.__canvas_frame.grid_propagate(False)
@@ -39,7 +39,7 @@ class Root:
         self.__root.geometry(geometry)
 
     def create_minefield(self, num_rows, num_cols, seed=None):
-        self.minefield = Minefield(num_rows, num_cols, self.__board_frame, self.__canvas, seed)
+        self.minefield = Minefield(num_rows, num_cols, self.__board_frame, self.__main_frame, seed)
         self.__board_frame.update_idletasks()
         self.resize_canvas_frame()
 
