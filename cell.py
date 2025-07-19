@@ -10,6 +10,7 @@ class Cell:
         self.is_mine = is_mine
         self.is_revealed = False
         self.locked = False
+        self.flagged = False
         self.value = 0
         self.revealed_value = StringVar()
         self.revealed_value.set("?")
@@ -33,14 +34,16 @@ class Cell:
         
     def mark(self):
         if not self.is_revealed:
-            self.is_revealed = True
             self.btn.config(relief=SUNKEN, state=DISABLED, bg="darkgray", activebackground="darkgray")
-            if self.is_mine:
+            if self.is_mine and not self.locked:
+                self.flagged = True
                 self.locked = True
                 self.__minefield.flagged.set(self.__minefield.flagged.get() + 1)
-        elif not self.locked:
-            self.is_revealed = False
-            self.btn.config(relief=RAISED, state=NORMAL, bg=self.__btn_color, activebackground=self.__btn_active_color)
+            elif self.flagged and not self.locked :
+                self.flagged = False
+                self.btn.config(relief=RAISED, state=NORMAL, bg=self.__btn_color, activebackground=self.__btn_active_color)
+            else:
+                self.flagged = True
     
     def reveal(self):
         if self.is_mine:

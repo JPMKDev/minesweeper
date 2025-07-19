@@ -3,16 +3,19 @@ from time import sleep
 from tkinter import *
 from tkinter import ttk
 from cell import *
+from gameover import GameOverPopup
     
 class Minefield:
     def __init__(
         self,
         num_rows,
         num_cols,
+        root,
         parent=None, #parent should be the innermost frame
         main_frame=None, #main_frame of the window
         seed=None #seed is used to generate the minefield randomly
     ):
+        self.root = root
         self.num_rows = 2 if num_rows<2 else num_rows
         self.num_cols = 2 if num_cols<2 else num_cols
         self.__parent = parent
@@ -31,6 +34,9 @@ class Minefield:
 
     def get_cells(self):
         return self.__cells
+    
+    def get_root(self):
+        return self.root.get_root()
 
     def __inc_counter(self, cell):
         cell.reveal()
@@ -40,9 +46,10 @@ class Minefield:
             self.__counter.set(self.__counter.get() + 1)
 
     def __create_cells(self):
-        ttk.Label(self.__main_frame, textvariable=self.__counter).grid(column=0, row=0, sticky=(W, E))
-        ttk.Label(self.__main_frame, textvariable=self.__boom_counter).grid(column=1, row=0, sticky=(W, E))
-        ttk.Label(self.__main_frame, textvariable=self.flagged).grid(column=2, row=0, sticky=(W, E))
+        ttk.Label(self.__main_frame, text="Cells Opened: ").grid(column=0, row=0, sticky=(W, E))
+        ttk.Label(self.__main_frame, textvariable=self.__counter).grid(column=1, row=0, sticky=(W, E))
+        ttk.Label(self.__main_frame, text="Bombs Marked: ").grid(column=2, row=0, sticky=(W, E))
+        ttk.Label(self.__main_frame, textvariable=self.flagged).grid(column=3, row=0, sticky=(W, E))
         #print(num_mines)
         self.__place_cells(6, self.num_rows, row_end=True)
         self.__get_values()
@@ -130,6 +137,9 @@ class Minefield:
                     boom_speed *= 0.95
             self.__main_frame.update_idletasks()
             sleep(0.01 * boom_speed)
+        sleep(0.5)
+        GameOverPopup(self)
+        return
     
     def __get_go_cells_ring(self, cx, cy, distance):
         cells= []
