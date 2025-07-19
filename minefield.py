@@ -120,12 +120,22 @@ class Minefield:
                 self.num_rows += 1
                 self.__get_values(y1=0, y2=2)
         #self.__canvas.config(scrollregion=self.__canvas.bbox("all"))
+
+    def game_over(self, x, y):
+        max_distance = max(self.num_rows, self.num_cols)
+        boom_speed = 80
+        for i in range(max_distance):
+            for cell in self.__get_go_cells_ring(x, y, i):
+                if cell.game_over():
+                    boom_speed *= 0.95
+            self.__main_frame.update_idletasks()
+            sleep(0.01 * boom_speed)
     
-    def __draw_cell(self, x, y):
-        self.__cells[y][x].draw()
-        self.__animate()
-    
-    def __animate(self, multiplier=1):
-        if self.master is not None:
-            self.master.redraw()
-            sleep(.01*multiplier)
+    def __get_go_cells_ring(self, cx, cy, distance):
+        cells= []
+        for y in range(self.num_rows):
+            for x in range(self.num_cols):
+                if ((y == cy-distance or y == cy+distance) and (x >= cx-distance and x <= cx+distance)) or \
+                   ((x == cx-distance or x == cx+distance) and (y >= cy-distance and y <= cy+distance)):
+                    cells.append(self.__cells[y][x])
+        return cells

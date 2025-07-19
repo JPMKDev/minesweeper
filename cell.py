@@ -1,4 +1,5 @@
 from functools import partial
+from time import sleep
 from tkinter import *
 
 class Cell:
@@ -40,10 +41,11 @@ class Cell:
         elif not self.locked:
             self.is_revealed = False
             self.btn.config(relief=RAISED, state=NORMAL, bg=self.__btn_color, activebackground=self.__btn_active_color)
-            
-
     
     def reveal(self):
+        if self.is_mine:
+            self.__minefield.game_over(self.__x, self.__y)
+            return
         if self.__x == 0:
             self.__minefield.expand(4)#left
         if self.__y == 0:
@@ -79,7 +81,13 @@ class Cell:
             case _: #8
                 self.btn.config(bg="Purple3", activebackground="Purple2")
 
-
+    def game_over(self):
+        if self.is_mine:
+            self.btn.config(bg="red", activebackground="red", text="*", state=DISABLED)
+            return True
+        else:
+            return False
+        
             
 
     def get_adjacent_cells(self):
