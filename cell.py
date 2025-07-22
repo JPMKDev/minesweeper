@@ -1,9 +1,9 @@
-from functools import partial
-from time import sleep
 from tkinter import *
 
+from gameover import GameOverPopup
+
 class Cell:
-    def __init__(self,x, y, is_mine, parent_frame, button_func=None, minefield=None):
+    def __init__(self,x, y, is_mine, parent_frame, minefield=None):
         self.__x = x
         self.__y = y
         self.__parent_frame = parent_frame
@@ -15,11 +15,24 @@ class Cell:
         self.revealed_value = StringVar()
         self.revealed_value.set("?")
         self.__minefield = minefield
-        self.btn = Button(self.__parent_frame, height=1, width=1, textvariable=self.revealed_value, command=partial(button_func, self))
+        self.btn = Button(self.__parent_frame, height=1, width=1, textvariable=self.revealed_value, command=self.__click)
         self.__btn_color = self.btn.cget("bg")
         self.__btn_active_color = self.btn.cget("activebackground")
-        self.btn.bind("<Button-3>", lambda event: self.mark())  # Right-click to mark
+        self.btn.bind("<Button-3>", lambda event: self.__mark())  # Right-click to mark
         self.btn.grid(column=x, row=y, sticky='news')
+
+    def __click(self):
+        if not self.__minefield.first_clicked:
+            self.is_mine = False
+            self.get_value()
+            adjacent = self.__get_adjacent_cells()
+            for cell in adjacent:
+                if cell is not None:
+                    cell.get_value()
+            self.__minefield.first_click()
+        self.__reveal()
+        if not self.is_mine:
+            self.__minefield.counter.set(self.__minefield.counter.get() + 1)
 
     def __repr__(self):
         return f"Cell {self.is_mine}(@{self.__x},{self.__y}) sees {self.value}"
@@ -32,20 +45,23 @@ class Cell:
         self.__y += 1
         self.btn.grid(column=self.__x, row=self.__y, sticky='news')
         
-    def mark(self):
-        if not self.is_revealed:
+    def __mark(self):
+        if not self.is_revealed and self.__minefield.first_clicked:
             self.btn.config(relief=SUNKEN, state=DISABLED, bg="darkgray", activebackground="darkgray")
             if self.is_mine and not self.locked:
                 self.flagged = True
                 self.locked = True
-                self.__minefield.flagged.set(self.__minefield.flagged.get() + 1)
+                num_flagged = self.__minefield.flagged+1
+                if num_flagged >= self.__minefield.goal:
+                    self.__minefield.game_over_victory()
+                self.__minefield.update_flagged(num_flagged)
             elif self.flagged and not self.locked :
                 self.flagged = False
                 self.btn.config(relief=RAISED, state=NORMAL, bg=self.__btn_color, activebackground=self.__btn_active_color)
             else:
                 self.flagged = True
     
-    def reveal(self):
+    def __reveal(self):
         if self.is_mine:
             self.__minefield.game_over(self.__x, self.__y)
             return
@@ -63,7 +79,7 @@ class Cell:
         match(self.value):
             case 0:
                 self.btn.config(bg="LightCyan3", activebackground="LightCyan2")
-                adj_cells = self.get_adjacent_cells()
+                adj_cells = self.__get_adjacent_cells()
                 for cell in adj_cells:
                     if cell is not None and not cell.is_revealed:
                         cell.btn.invoke()
@@ -93,12 +109,12 @@ class Cell:
         
             
 
-    def get_adjacent_cells(self):
-        l_exist = self.__x != 0 #check left
-        r_exist = self.__x < len(self.__minefield.get_cells()[self.__y])-1 #check right
-        u_exist = self.__y != 0 #check up
-        d_exist = self.__y < len(self.__minefield.get_cells())-1 #check down
+    def __get_adjacent_cells(self):
         cells = self.__minefield.get_cells()
+        l_exist = self.__x != 0 #check left
+        r_exist = self.__x < len(cells[self.__y])-1 #check right
+        u_exist = self.__y != 0 #check up
+        d_exist = self.__y < len(cells)-1 #check down
         adjacent = []
         # numpad notation
         adjacent.append(cells[self.__y+1][self.__x-1] if d_exist and l_exist else None) #1
@@ -114,7 +130,7 @@ class Cell:
     
     def get_value(self):
         value = 0
-        adj_cells = self.get_adjacent_cells()
+        adj_cells = self.__get_adjacent_cells()
         for cell in adj_cells:
             value += 1 if cell is not None and cell.is_mine else 0
         self.value = value

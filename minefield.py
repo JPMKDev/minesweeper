@@ -11,6 +11,7 @@ class Minefield:
         num_rows,
         num_cols,
         root,
+        goal=100, #goal is the number of mines to be marked
         parent=None, #parent should be the innermost frame
         main_frame=None, #main_frame of the window
         seed=None #seed is used to generate the minefield randomly
@@ -18,43 +19,46 @@ class Minefield:
         self.root = root
         self.num_rows = 2 if num_rows<2 else num_rows
         self.num_cols = 2 if num_cols<2 else num_cols
+        self.goal = goal
         self.__parent = parent
         self.__main_frame = main_frame
         self.__available_mines = (self.num_cols * self.num_rows)//6
         self.__cells = []
-        self.__counter = IntVar()
-        self.__counter.initialize(0)
-        self.__boom_counter = IntVar()
-        self.__boom_counter.initialize(0)
-        self.flagged = IntVar()
-        self.flagged.initialize(0)
+        self.counter = IntVar()
+        self.counter.initialize(0)
+        self.flagged = 0
+        self.flagged_str = StringVar()
+        self.flagged_str.initialize("")
+        self.first_clicked = False
         if seed is not None:
-            random.seed(seed) 
+            random.seed(seed)
+        
+        ttk.Label(self.__main_frame, text="Cells Opened: ").grid(column=0, row=0, sticky=(W, E))
+        ttk.Label(self.__main_frame, textvariable=self.counter).grid(column=1, row=0, sticky=(W, E))
+        ttk.Label(self.__main_frame, text="Bombs Marked: ").grid(column=2, row=0, sticky=(W, E))
+        ttk.Label(self.__main_frame, textvariable=self.flagged_str).grid(column=3, row=0, sticky=(W, E))
         self.__create_cells()
+
+    def first_click(self):
+        self.first_clicked = True
+        self.__available_mines += 1
 
     def get_cells(self):
         return self.__cells
     
     def get_root(self):
         return self.root.get_root()
-
-    def __inc_counter(self, cell):
-        cell.reveal()
-        if cell.is_mine:
-            self.__boom_counter.set(self.__boom_counter.get() + 1)
-        else:
-            self.__counter.set(self.__counter.get() + 1)
+    
+    def update_flagged(self, new_flagged):
+        self.flagged = new_flagged
+        self.flagged_str.set(f"{self.flagged}/{self.goal}")
+        #self.__main_frame.update_idletasks()
 
     def __create_cells(self):
-        ttk.Label(self.__main_frame, text="Cells Opened: ").grid(column=0, row=0, sticky=(W, E))
-        ttk.Label(self.__main_frame, textvariable=self.__counter).grid(column=1, row=0, sticky=(W, E))
-        ttk.Label(self.__main_frame, text="Bombs Marked: ").grid(column=2, row=0, sticky=(W, E))
-        ttk.Label(self.__main_frame, textvariable=self.flagged).grid(column=3, row=0, sticky=(W, E))
-        #print(num_mines)
         self.__place_cells(6, self.num_rows, row_end=True)
         self.__get_values()
 
-    def __place_cells(self, density, rows=0, row_end=True, cols=0, col_end=True):
+    def __place_cells(self, density, rows=0, row_end=True, cols=False, col_end=True):
         init_huh = self.__cells == []
         if rows > 0:
             for y in range(rows):
@@ -67,12 +71,12 @@ class Minefield:
                         if is_mine:
                             self.__available_mines -= 1
                     print(f"creating cell @ ({x},{y_pos})")
-                    row.append(Cell(x, y_pos, is_mine, self.__parent, self.__inc_counter, self))
+                    row.append(Cell(x, y_pos, is_mine, self.__parent, self))
                 if row_end:
                     self.__cells.append(row)
                 else:
                     self.__cells.insert(0, row)
-        if cols > 0:
+        if cols:
             for y in range(self.num_rows):
                     row = self.__cells[y]
                     is_mine = False
@@ -82,7 +86,7 @@ class Minefield:
                             self.__available_mines -= 1
                     x = self.num_cols if col_end else 0
                     print(f"creating cell @ ({x},{y})")
-                    cell = Cell(x, y, is_mine, self.__parent, self.__inc_counter, self)
+                    cell = Cell(x, y, is_mine, self.__parent, self)
                     if col_end:
                         row.append(cell)
                     else:
@@ -105,7 +109,7 @@ class Minefield:
                 for y in range(self.num_rows):
                     for x in range(self.num_cols):
                         self.__cells[y][x].shift_right()
-                self.__place_cells(3, cols=1, col_end=False)
+                self.__place_cells(3, cols=True, col_end=False)
                 self.num_cols += 1
                 self.__get_values(x1=0, x2=2)
             case 2: #Down
@@ -115,7 +119,7 @@ class Minefield:
                 self.__get_values(y1=self.num_rows-2, y2=self.num_rows)
             case 6: #Right
                 self.__available_mines+=self.num_rows
-                self.__place_cells(3, cols=1, col_end=True)
+                self.__place_cells(3, cols=True, col_end=True)
                 self.num_cols += 1
                 self.__get_values(x1=self.num_cols-2, x2=self.num_cols)
             case 8: #Up
@@ -139,6 +143,10 @@ class Minefield:
             sleep(0.01 * boom_speed)
         sleep(0.5)
         GameOverPopup(self)
+        return
+    
+    def game_over_victory(self):
+        GameOverPopup(self, "You win!", "green")
         return
     
     def __get_go_cells_ring(self, cx, cy, distance):

@@ -41,12 +41,12 @@ class Root:
     def geometry(self, geometry):
         self.__root.geometry(geometry)
 
-    def create_minefield(self, num_rows, num_cols, seed=None):
-        self.minefield = Minefield(num_rows, num_cols, self, self.__board_frame, self.__main_frame, seed)
+    def create_minefield(self, num_rows, num_cols, goal=100, seed=None):
+        self.minefield = Minefield(num_rows, num_cols, self, goal, self.__board_frame, self.__main_frame, seed=seed)
         self.__board_frame.update_idletasks()
-        self.resize_canvas_frame()
+        self.__resize_canvas_frame()
 
-    def resize_canvas_frame(self):
+    def __resize_canvas_frame(self):
         cells = self.minefield.get_cells()
         first5columns_width = cells[0][0].btn.winfo_width() * 25
         first5rows_height = cells[0][0].btn.winfo_height() * 25
